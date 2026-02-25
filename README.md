@@ -1,104 +1,149 @@
 # OBJ to Tetrahedron Mesh Toolchain
-A toolchain for automating the conversion of OBJ models to tetrahedron meshes (TET format), integrating the full workflow of OBJ→PLY format conversion, tetrahedral meshing (based on tetgen), and NODE/ELE→TET format conversion.
+
+A toolchain for automating the conversion of OBJ models to tetrahedron meshes (TET format), integrating the full workflow of **OBJ → watertight PLY → tetrahedral mesh → TET format**.  
+The pipeline now includes a **mesh repair** step based on **VCGLib** to ensure the input mesh is watertight and manifold before tetrahedralization.
 
 ---
 
 ## 📦 Tool Components
+
 | Tool Name | Function | Core Dependencies |
 |-----------|----------|-------------------|
-| `obj2ply.exe` | Convert OBJ models to tetgen-compatible ASCII-format PLY files | trimesh (Python) |
+| `mesh_repair.exe` | **Repair OBJ models** to guarantee watertightness: remove duplicate vertices/faces, delete unreferenced vertices, remove degenerate faces, fix self-intersections, fill holes, and orient faces consistently. | [VCGLib](http://vcg.isti.cnr.it/vcglib/) (GPL) |
+| `obj2ply.exe` | Convert OBJ models to tetgen‑compatible ASCII‑format PLY files | trimesh (Python) |
 | `tetgen.exe` | Mesh PLY files into tetrahedral grids and generate `.node`/`.ele` files | [tetgen 1.5.1](https://wias-berlin.de/software/tetgen/) (AGPL v3) |
-| `nodele2tet.exe` | Merge tetgen-generated `.node`/`.ele` files into custom TET format files | Self-developed C++ program |
-| `obj2tet.exe` | Execute the full "OBJ→PLY→NODE/ELE→TET" workflow in one click | All tools above |
+| `nodele2tet.exe` | Merge tetgen‑generated `.node`/`.ele` files into custom TET format files | Self‑developed C++ |
+| `obj2tet.exe` | Execute the full "OBJ → TET" workflow in one click | All tools above |
 
 ---
 
 ## 🚀 Quick Start
-### 1. One-Click Full Workflow Conversion (Recommended)
-Automate all steps with `obj2tet.exe` without manually invoking multiple tools:
+
+### 1. Repair a Mesh (Optional but Recommended)
+Before tetrahedralization, ensure your OBJ is watertight and manifold:
 ```bash
-# Basic usage: default maximum tetrahedron volume 0.001, no intermediate files retained
+mesh_repair input.obj output.ply
+```
+This produces a repaired PLY file that can be fed directly into `tetgen`.  
+*Note:* The repaired PLY contains only vertices and faces (no normals or colors) – exactly what tetgen requires.
+
+### 2. One‑Click Full Workflow (Recommended)
+Automate all steps with `obj2tet.exe`:
+```bash
+# Basic usage: default max tetrahedron volume 0.001, no intermediate files retained
 obj2tet example.obj
 
-# Custom parameters: specify max volume 0.0005 and retain intermediate files (PLY/NODE/ELE)
+# Custom parameters: max volume 0.0005, retain intermediate files (PLY/NODE/ELE)
 obj2tet example.obj 0.0005 1
 ```
-Parameter Explanation:
-- `input.obj`: Path to the input OBJ model file
-- `0.001` (optional): Maximum volume of tetrahedrons (default 0.001; smaller values yield denser meshes)
-- `1` (optional): Whether to retain intermediate files (`1` = retain, default = not retain)
+**Parameters:**
+- `input.obj` – Path to the input OBJ model.
+- `0.001` (optional) – Maximum tetrahedron volume (smaller → denser mesh).
+- `1` (optional) – Retain intermediate files (1 = keep, default = delete).
 
----
+The tool automatically calls `mesh_repair` (if needed), `tetgen`, and `nodele2tet` in sequence.
 
-### 2. Step-by-Step Manual Conversion (Debugging/Customization Scenarios)
-#### ① Convert OBJ to PLY
+### 3. Step‑by‑Step Manual Conversion (Debugging/Customization)
+If you prefer to run each tool separately:
+
+#### ① Repair OBJ → watertight PLY
 ```bash
-obj2ply example.obj example.ply
+mesh_repair input.obj repaired.ply
 ```
-- Outputs ASCII-format PLY files to ensure compatibility with tetgen
 
-#### ② Mesh PLY to NODE/ELE
+#### ② Convert repaired PLY to NODE/ELE
 ```bash
-tetgen -pqO -a0.001 example.ply
+tetgen -pqO -a0.001 repaired.ply
 ```
-- `-pqO`: Generate high-quality, optimized tetrahedral meshes
-- `-a0.001`: Limit the maximum volume of each tetrahedron to 0.001
-- Generated files: `example.1.node`, `example.1.ele` (tetgen's default naming convention)
+- `-pqO`: High‑quality, optimized tetrahedral mesh.
+- `-a0.001`: Limit each tetrahedron’s volume to ≤0.001.
+- Output: `repaired.1.node`, `repaired.1.ele`
 
 #### ③ Convert NODE/ELE to TET
 ```bash
-# 0-based index (use -0 when converting tetgen's 1-based indices to 0-based)
-nodele2tet -0 example.1.node example.1.ele example.tet
+# 0‑based indices (convert tetgen’s 1‑based indices to 0‑based)
+nodele2tet -0 repaired.1.node repaired.1.ele output.tet
 
-# 1-based index (use -1 to directly use tetgen's original 1-based indices)
-nodele2tet -1 example.1.node example.1.ele example.tet
+# 1‑based indices (keep tetgen’s original indexing)
+nodele2tet -1 repaired.1.node repaired.1.ele output.tet
 ```
-Parameter Explanation:
-- `-0`/`-1`: Index base of input files (0-based / 1-based)
-- `input.node`/`input.ele`: Node/tetrahedron files generated by tetgen
-- `output.tet`: Output TET format file
 
 ---
 
-## 📜 Compliance Statement for Third-Party Components (tetgen)
-This toolchain includes the third-party component **tetgen 1.5.1** (Original Author: Hang Si, Official Website: https://wias-berlin.de/software/tetgen/), which is licensed under the **GNU Affero General Public License (AGPL) v3**. To comply with the license requirements, we have taken the following measures:
-1. **Source Code Integrity**: The `tetgen1.5.1` folder in the project root directory contains the complete original source code of tetgen and the compiled `tetgen.exe`;
-2. **Source Attribution**: Clearly state tetgen's original author, official address, and license type;
-3. **Distribution Obligation**: Any user obtaining this toolchain can access the tetgen source code via the `tetgen1.5.1` folder or download the latest version from the official address;
-4. **Derivative Work Statement**: This toolchain only invokes the binary file of tetgen and does not modify the tetgen source code. If you modify the tetgen source code and recompile it, you must open-source the modified code in compliance with the AGPL v3 license.
+## 📜 License
+
+This project consists of three parts with different licenses. Please read carefully before use.
+
+### 1. Self‑Developed Tools (MIT License)
+The following tools are original work and are licensed under the **MIT License**:
+- `obj2ply.py` / `obj2ply.exe`
+- `nodele2tet.cpp` / `nodele2tet.exe`
+- `obj2tet.cpp` / `obj2tet.exe`
+
+**MIT License**  
+Copyright (c) 2026 Ruiyi Du  
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the conditions that the above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
+
+### 2. Mesh Repair Tool (GNU GPL v3)
+`mesh_repair.exe` is built upon **VCGLib** (Visual and Computer Graphics Library), which is licensed under the **GNU General Public License version 3**. Consequently, the `mesh_repair` tool as a whole is also distributed under **GPL v3**.  
+- Source code of `mesh_repair` (based on VCGLib) is available in the `mesh_repair/` folder.
+- VCGLib homepage: [http://vcglib.net/](http://vcglib.net/)
+- Full GPL v3 license text can be found in `mesh_repair/COPYING`.
+
+**Important:** If you modify `mesh_repair` or use its source in your own project, you must comply with the GPL v3 (i.e., any derivative work must also be open‑sourced under GPL).
+
+### 3. Third‑Party Component: tetgen (GNU AGPL v3)
+The toolchain includes **tetgen 1.5.1** (original author Hang Si, [https://wias-berlin.de/software/tetgen/](https://wias-berlin.de/software/tetgen/)), licensed under the **GNU Affero General Public License v3**.  
+- The complete source code of tetgen 1.5.1 is provided in the `tetgen1.5.1/` folder.
+- The binary `tetgen.exe` is compiled from that source.
+- If you modify the tetgen source, you **must** make your modifications available under AGPL v3.
+- The full license text is in `tetgen1.5.1/AGPL-3.0.txt`.
+
+**Compliance Notes:**
+- When distributing this toolchain, you must retain all license notices.
+- The `tetgen1.5.1/` folder containing the tetgen source must accompany the binary `tetgen.exe`.
+- For commercial use of tetgen, please review the AGPL v3 requirements (especially concerning network services).
 
 ---
 
 ## 🛠️ Deployment Instructions
-1. Place all tools (`obj2ply.exe`, `tetgen.exe`, `nodele2tet.exe`, `obj2tet.exe`) in the **same directory**, or add them to the system `PATH` environment variable;
-2. Ensure the `tetgen1.5.1` folder is in the same directory as the tool executables to meet the source code access requirements of AGPL v3;
-3. To modify the tool source code, edit the corresponding `.cpp`/`.py` files and recompile directly.
+
+1. Place all executables (`mesh_repair.exe`, `obj2ply.exe`, `tetgen.exe`, `nodele2tet.exe`, `obj2tet.exe`) in the **same directory**, or add that directory to your system `PATH`.
+2. The folders `tetgen1.5.1/` and `mesh_repair/` (containing source code and license files) **must** be kept together with the binaries to satisfy open‑source license obligations.
+3. To rebuild any tool, use the provided source files and respective build systems (CMake for C++ tools, PyInstaller for Python tools).
 
 ---
 
-## 📄 Open Source Licenses
-### Self-Developed Code (obj2ply.py, nodele2tet.cpp, obj2tet.cpp)
-Licensed under the **MIT License**. You are free to use, modify, and distribute the code without the obligation to open-source modified versions, provided that the original author's copyright notice is retained.
+## 🎯 Frequently Asked Questions
 
-### Third-Party Component (tetgen 1.5.1)
-Licensed under the **GNU AGPL v3 License**. The full license text is available in `tetgen1.5.1/LICENSE`.
+### Q: Why do I need `mesh_repair`? My OBJ looks fine.
+A: Tetgen requires a **watertight, manifold** surface mesh. Many OBJ files contain duplicate vertices, unused vertices, degenerate faces, small holes, or inconsistent face orientations. `mesh_repair` fixes all these issues automatically, significantly increasing the success rate of tetrahedralization.
 
----
+### Q: What exactly does `mesh_repair` do?
+A: It performs the following operations in sequence (based on VCGLib):
+- Remove duplicate vertices (within a small tolerance)
+- Remove vertices not referenced by any face
+- Remove duplicate faces
+- Remove degenerate faces (area zero)
+- Detect and remove self‑intersecting faces
+- Detect and fill holes (up to a configurable size)
+- Orient all faces consistently (outward or inward)
+- Update normals (optional)
 
-## 🎯 Frequently Asked Questions (FAQ)
-### Q: Why is obj2ply.exe large in size?
-A: obj2ply is packaged with Python + trimesh and includes a complete Python runtime. To reduce the size, repackage it with only necessary dependencies (see the packaging optimization instructions in the project documentation).
+### Q: Why is `mesh_repair.exe` so large?
+A: It is statically linked with VCGLib and compiled in release mode. VCGLib is a header‑only library, but the compiled code includes all necessary algorithms; the size is normal for a mesh processing tool.
 
-### Q: Why do tetgen-generated files have a `.1` suffix?
-A: This is tetgen's default naming convention (indicating the 1st meshing iteration). `obj2tet.exe` automatically renames them to `.node`/`.ele` to adapt to the input requirements of `nodele2tet.exe`.
+### Q: Can I use `mesh_repair` in my own commercial project?
+A: Because `mesh_repair` is based on VCGLib (GPL v3), any project that links to or distributes `mesh_repair` must also be open‑sourced under GPL v3. If this is not acceptable, you may consider using a different mesh repair library with a more permissive license (e.g., CGAL with a commercial license) and replace the tool.
 
-### Q: How to ensure compliance with the AGPL v3 license?
-A: As long as you do not modify the tetgen source code, only distribute the binary files of this toolchain, and retain the source code in the `tetgen1.5.1` folder, you comply with the license requirements. If you modify the tetgen source code, you must open-source the modified code.
+### Q: How do I contribute to the toolchain?
+A: Feel free to submit issues or pull requests on the project repository. Please respect the license of each component when making changes.
 
 ---
 
 ## 📞 Feedback and Contributions
-If you encounter issues or have improvement suggestions, please submit an Issue or Pull Request.
+
+If you encounter problems or have suggestions, please open an issue or pull request in the project repository.
 
 ---
-*This toolchain is intended for academic/open-source projects only. For commercial use, please independently evaluate compliance with the tetgen AGPL v3 license.*
+*This toolchain is intended for academic and open‑source projects. Commercial users must independently evaluate the license implications of tetgen (AGPL) and VCGLib (GPL).*

@@ -1,13 +1,18 @@
 # LICENSE - OBJ to Tetrahedron Mesh Toolchain
-This toolchain consists of two parts: **self-developed code** and **third-party open-source components**, each governed by different licenses as detailed below:
+
+This toolchain consists of three parts: **self-developed code**, a **mesh repair tool based on VCGLib**, and a **third-party tetrahedral meshing component**. Each part is governed by its own license as detailed below.
+
+---
 
 ## 1. Self-Developed Code (MIT License)
-The copyright of the following self-developed programs/code is owned by the developer and licensed under the MIT License:
-- obj2ply.py / obj2ply.exe (OBJ to PLY converter)
-- nodele2tet.cpp / nodele2tet.exe (NODE/ELE to TET converter)
-- obj2tet.cpp / obj2tet.exe (One-click OBJ to TET workflow tool)
 
-### Standard Text of the MIT License
+The following programs and their source code are original work and are licensed under the **MIT License**:
+- `obj2ply.py` / `obj2ply.exe` (OBJ to PLY converter)
+- `nodele2tet.cpp` / `nodele2tet.exe` (NODE/ELE to TET converter)
+- `obj2tet.cpp` / `obj2tet.exe` (One‑click OBJ → TET workflow tool)
+
+### MIT License Text
+```
 MIT License
 
 Copyright (c) 2026 Ruiyi Du
@@ -29,18 +34,49 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+```
 
-## 2. Third-Party Component: tetgen 1.5.1 (AGPL v3 License)
-The `tetgen1.5.1` folder in this toolchain contains the complete source code of tetgen 1.5.1 and the compiled `tetgen.exe`. This component is copyrighted by its original author Hang Si and licensed under the GNU Affero General Public License (AGPL) v3.
+---
 
-### Compliance Statement for tetgen
-1. Original Author: Hang Si
-2. Official Website: https://wias-berlin.de/software/tetgen/
-3. License Text: The full text of the AGPL v3 License is available in `tetgen1.5.1/AGPL-3.0.txt`
-4. Source Code Access: The `tetgen1.5.1` folder contains the complete original source code of tetgen 1.5.1, which can be directly compiled to generate `tetgen.exe`
-5. Derivative Constraints: If you modify the source code in the `tetgen1.5.1` folder and recompile it, you must open-source the modified source code in compliance with the AGPL v3 License.
+## 2. Mesh Repair Tool – `mesh_repair.exe` (GNU GPL v3)
 
-## 3. Overall Compliance Requirements
-1. When distributing this toolchain, you must retain this LICENSE file and shall not delete or alter the MIT License notice for self-developed code or the AGPL v3 License notice for tetgen;
-2. When only using/distributing the tetgen binary file (`tetgen.exe`), ensure that the source code in the `tetgen1.5.1` folder is distributed together with the binary file;
-3. Before commercial use, independently evaluate the constraints of the AGPL v3 License on commercial scenarios (e.g., open-sourcing relevant code is required for network service scenarios).
+The executable `mesh_repair.exe` is built upon **VCGLib (Visual and Computer Graphics Library)**, which is licensed under the **GNU General Public License version 3**. Consequently, the `mesh_repair` tool as a whole is also distributed under the **GPL v3**.
+
+- **VCGLib Homepage:** [http://vcglib.net//](http://vcglib.net/)
+- **VCGLib License:** GPL v3 (the library is header‑only, but any program linking to it must comply with GPL).
+- **Source Code Availability:** The complete source code of `mesh_repair` (including the VCGLib headers and the repair logic) is provided in the `mesh_repair/` folder.
+- **Binary:** `mesh_repair.exe` is compiled from that source and is included in the toolchain.
+
+**GPL v3 Compliance:**
+- If you distribute `mesh_repair.exe`, you must also make the corresponding source code available (it is already included in the `mesh_repair/` folder).
+- Any modification to `mesh_repair` or use of its code in another project must be released under GPL v3 as well.
+- The full text of the GNU General Public License version 3 can be found in `mesh_repair/COPYING` or at [https://www.gnu.org/licenses/gpl-3.0.html](https://www.gnu.org/licenses/gpl-3.0.html).
+
+---
+
+## 3. Third-Party Component: tetgen 1.5.1 (GNU AGPL v3)
+
+The toolchain includes **tetgen 1.5.1** (original author Hang Si), which is licensed under the **GNU Affero General Public License version 3**. The folder `tetgen1.5.1/` contains the complete source code of tetgen 1.5.1 and the compiled binary `tetgen.exe`.
+
+- **Original Author:** Hang Si
+- **Official Website:** [https://wias-berlin.de/software/tetgen/](https://wias-berlin.de/software/tetgen/)
+- **License Text:** The full AGPL v3 license is available in `tetgen1.5.1/AGPL-3.0.txt`.
+- **Source Code:** The `tetgen1.5.1/` folder contains the exact source used to build the provided `tetgen.exe`. You can rebuild it yourself using the supplied makefiles or project files.
+
+**AGPL v3 Compliance:**
+- If you modify the source code in the `tetgen1.5.1/` folder and recompile, you **must** make your modifications available under AGPL v3.
+- When distributing `tetgen.exe`, you must also distribute the corresponding source code (which is already done by including the `tetgen1.5.1/` folder).
+- For commercial use, especially if the tool is used to offer a network service, please carefully review the requirements of the AGPL v3.
+
+---
+
+## 4. Overall Compliance Requirements
+
+1. **Retain all license notices.** When distributing this toolchain, you must keep this `LICENSE` file intact. Do not delete or alter the MIT, GPL, or AGPL notices.
+2. **Accompany binaries with source.** For any GPL‑ or AGPL‑licensed component (`mesh_repair.exe` and `tetgen.exe`), the corresponding source code must be made available alongside the binary. This is already satisfied by including the `mesh_repair/` and `tetgen1.5.1/` folders.
+3. **Derivative works.** If you modify any part covered by GPL or AGPL, your modifications must be released under the same license. The MIT‑licensed parts can be relicensed or incorporated into proprietary projects, provided the MIT copyright notice is preserved.
+4. **Independent evaluation for commercial use.** Before using this toolchain in a commercial product or service, evaluate the implications of the GPL and AGPL licenses, especially regarding the requirement to disclose source code when the software is distributed or used to provide a network service.
+
+---
+
+*This license file is part of the OBJ to Tetrahedron Mesh Toolchain and applies to all files distributed within this package unless otherwise noted.*
