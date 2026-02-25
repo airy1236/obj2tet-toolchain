@@ -147,9 +147,5 @@ A: Feel free to submit issues or pull requests on the project repository. Please
 
 If you encounter problems or have suggestions, please open an issue or pull request in the project repository.
 
----
-<<<<<<< HEAD
-*This toolchain is intended for academic and open‑source projects. Commercial users must independently evaluate the license implications of tetgen (AGPL) and VCGLib (GPL).*
-=======
 *This toolchain is intended for academic/open-source projects only. For commercial use, please independently evaluate compliance with the tetgen AGPL v3 license.*
->>>>>>> 020ffc99a7584365df1c5b1a55369a1ca9c15e2e
+
